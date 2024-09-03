@@ -1,0 +1,63 @@
+// prisma/schema.prisma
+
+// Defina a fonte de dados
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")  // Certifique-se de que a variável de ambiente está correta
+}
+
+// Defina o gerador de cliente
+generator client {
+  provider = "prisma-client-js"
+}
+
+model workspaces {
+  id             Int              @id @default(autoincrement())
+  name           String
+  users          users[]
+  workspace_users workspace_users[]
+  projects       projects[]        // Adicione esta linha para a relação com Project
+  created_at     DateTime         @default(now()) @map("created_at")
+}
+
+model users {
+  id             Int              @id @default(autoincrement())
+  username       String
+  email          String           @unique
+  password       String
+  workspace      workspaces       @relation(fields: [workspace_id], references: [id])
+  workspace_id   Int              @map("workspace_id")
+  created_at     DateTime         @default(now()) @map("created_at")
+  workspace_users workspace_users[]
+
+  @@map("users")
+}
+
+model roles {
+  id             Int              @id @default(autoincrement())
+  name           String
+  workspace_users workspace_users[]
+
+  @@map("roles")
+}
+
+model workspace_users {
+  id          Int         @id @default(autoincrement())
+  user_id     Int         @map("user_id")
+  workspace_id Int        @map("workspace_id")
+  role_id     Int         @map("role_id")
+  role        roles       @relation(fields: [role_id], references: [id])
+  user        users       @relation(fields: [user_id], references: [id])
+  workspace   workspaces  @relation(fields: [workspace_id], references: [id])
+
+  @@map("workspace_users")
+}
+
+model projects {
+  id          Int      @id @default(autoincrement())
+  name        String
+  workspace_id Int
+  workspace   workspaces @relation(fields: [workspace_id], references: [id])
+
+  @@map("projects")
+}
